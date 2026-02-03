@@ -10,17 +10,9 @@ Preferred communication style: Simple, everyday language.
 
 ## Recent Changes
 
-- **2026-02-03**: Added Real CDN Ping Measurement
-  - Ping now tests against actual CDN endpoints (Cloudflare, Google, Microsoft, Amazon)
-  - Uses image loading technique to bypass CORS and measure real latency to edge servers
-  - CDNs route to nearest edge location, so users get accurate ping from their location
-  - Download/Upload still tests against app server (Replit US)
-  - Removed emojis, using Lucide icons instead per project guidelines
-
 - **2026-02-03**: Added Speed Test feature
   - Real-time download/upload speed testing with streaming data endpoints
-  - Ping latency measurement (5-sample average)
-  - CDN server selection (Cloudflare, Google, Microsoft, Amazon, or app server)
+  - Ping latency measurement using Cloudflare CDN (routes to nearest edge server)
   - Speed test history graph using recharts (keeps last 10 results)
   - Progress indicators for each test phase
 

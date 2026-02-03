@@ -4,23 +4,14 @@ import {
   Download, 
   Upload, 
   Activity,
-  MapPin,
   Server,
   CheckCircle2,
-  Loader2,
-  Globe
+  Loader2
 } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
 import { Badge } from "@/components/ui/badge";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
 import { 
   LineChart, 
   Line, 
@@ -40,42 +31,17 @@ interface SpeedTestResult {
   server: string;
 }
 
-interface TestServer {
-  id: string;
-  name: string;
-  provider: string;
-  pingUrl: string;
-  isImage: boolean; // Whether the URL is an image (for ping method selection)
-}
+// Ping CDN endpoint - Cloudflare has best global coverage (190+ edge locations)
+const PING_URL = "https://www.cloudflare.com/favicon.ico";
 
-// Real CDN endpoints - these route to the nearest edge server globally
-// Each CDN has edge servers worldwide and will route to the closest one
-const TEST_SERVERS: TestServer[] = [
-  { id: "cloudflare", name: "Cloudflare CDN", provider: "Cloudflare (190+ edge locations)", pingUrl: "https://www.cloudflare.com/favicon.ico", isImage: true },
-  { id: "google", name: "Google CDN", provider: "Google (200+ edge locations)", pingUrl: "https://www.google.com/favicon.ico", isImage: true },
-  { id: "microsoft", name: "Microsoft CDN", provider: "Azure CDN (global)", pingUrl: "https://www.bing.com/favicon.ico", isImage: true },
-  { id: "amazon", name: "Amazon CDN", provider: "CloudFront (global)", pingUrl: "https://d1.awsstatic.com/favicon.ico", isImage: true },
-  { id: "this-server", name: "This App Server", provider: "Replit (US)", pingUrl: "/api/ping", isImage: false },
-];
-
-// Helper function to ping a URL
-const pingUrl = async (url: string, isImage: boolean): Promise<number> => {
+// Helper function to ping using image loading (bypasses CORS, measures real latency)
+const pingCDN = async (): Promise<number> => {
   return new Promise((resolve) => {
     const start = performance.now();
-    
-    if (!isImage) {
-      // For API endpoints, use fetch
-      fetch(url, { cache: 'no-store', mode: 'cors' })
-        .then(() => resolve(performance.now() - start))
-        .catch(() => resolve(performance.now() - start));
-      return;
-    }
-    
-    // For image URLs, use image loading (measures actual network round-trip)
     const img = new Image();
     img.onload = () => resolve(performance.now() - start);
     img.onerror = () => resolve(performance.now() - start);
-    img.src = url + '?_=' + Date.now(); // Cache bust
+    img.src = PING_URL + '?_=' + Date.now();
   });
 };
 
@@ -89,16 +55,13 @@ export function SpeedTest() {
   const [currentUpload, setCurrentUpload] = useState<number | null>(null);
   const [currentPing, setCurrentPing] = useState<number | null>(null);
   const [results, setResults] = useState<SpeedTestResult[]>([]);
-  const [selectedServerId, setSelectedServerId] = useState<string>("cloudflare");
 
-  const selectedServer = TEST_SERVERS.find(s => s.id === selectedServerId) || TEST_SERVERS[0];
-
-  const measurePing = useCallback(async (server: TestServer): Promise<number> => {
+  const measurePing = useCallback(async (): Promise<number> => {
     const pings: number[] = [];
     
-    // Take 5 samples
+    // Take 5 samples from Cloudflare CDN (routes to nearest edge server)
     for (let i = 0; i < 5; i++) {
-      const pingTime = await pingUrl(server.pingUrl, server.isImage);
+      const pingTime = await pingCDN();
       pings.push(pingTime);
     }
     
@@ -177,10 +140,10 @@ export function SpeedTest() {
     setCurrentPing(null);
     
     try {
-      // Phase 1: Ping (to selected server)
+      // Phase 1: Ping (to Cloudflare CDN nearest edge)
       setPhase("ping");
       setProgress(0);
-      const ping = await measurePing(selectedServer);
+      const ping = await measurePing();
       setCurrentPing(ping);
       setProgress(100);
       
@@ -206,7 +169,7 @@ export function SpeedTest() {
           download: Math.round(download * 100) / 100,
           upload: Math.round(upload * 100) / 100,
           ping,
-          server: selectedServer.name
+          server: "CDN"
         }
       ]);
       
@@ -215,7 +178,7 @@ export function SpeedTest() {
     } finally {
       setIsRunning(false);
     }
-  }, [isRunning, measurePing, measureDownload, measureUpload, selectedServer]);
+  }, [isRunning, measurePing, measureDownload, measureUpload]);
 
   const formatTime = (timestamp: number) => {
     return new Date(timestamp).toLocaleTimeString([], { 
@@ -263,40 +226,6 @@ export function SpeedTest() {
           </Button>
         </CardHeader>
         <CardContent>
-          {/* Server Selector */}
-          <div className="mb-6 flex flex-col gap-3 rounded-lg bg-muted/50 p-4" data-testid="info-server-location">
-            <div className="flex items-center gap-2">
-              <Globe className="h-5 w-5 text-muted-foreground" />
-              <p className="text-sm font-medium">Select Ping Server (Real CDN Endpoints)</p>
-            </div>
-            <Select
-              value={selectedServerId}
-              onValueChange={setSelectedServerId}
-              disabled={isRunning}
-            >
-              <SelectTrigger className="w-full" data-testid="select-server">
-                <SelectValue placeholder="Select a server" />
-              </SelectTrigger>
-              <SelectContent>
-                {TEST_SERVERS.map((server) => (
-                  <SelectItem key={server.id} value={server.id} data-testid={`server-option-${server.id}`}>
-                    <div className="flex items-center gap-2">
-                      <Globe className="h-4 w-4 text-muted-foreground" />
-                      <span className="font-medium">{server.name}</span>
-                    </div>
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-            <div className="flex items-center gap-2 text-xs text-muted-foreground">
-              <MapPin className="h-3 w-3" />
-              <span data-testid="text-server-provider">Provider: {selectedServer.provider}</span>
-            </div>
-            <p className="text-xs text-muted-foreground/70">
-              Ping tests your connection to real CDN servers. Download/Upload tests run against this app's server.
-            </p>
-          </div>
-
           {/* Progress indicator */}
           {isRunning && (
             <div className="mb-6 space-y-2" data-testid="speed-test-progress">
@@ -313,7 +242,7 @@ export function SpeedTest() {
             <div className="flex flex-col items-center justify-center rounded-lg bg-muted/50 p-4" data-testid="result-ping">
               <div className="flex items-center gap-2 text-muted-foreground mb-2">
                 <Server className="h-4 w-4" />
-                <span className="text-sm">Ping to {selectedServer.provider.split(' ')[0]}</span>
+                <span className="text-sm">Ping</span>
               </div>
               <p className="text-2xl font-bold" data-testid="text-ping-value">
                 {currentPing !== null ? `${currentPing}` : "—"}
