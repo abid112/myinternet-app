@@ -43,12 +43,11 @@ interface InfoRowProps {
 
 export function InfoRow({ label, value, mono, testId }: InfoRowProps) {
   return (
-    <div className="flex items-center justify-between gap-4 py-2 border-b border-border/50 last:border-0">
+    <div className="flex items-start justify-between gap-4 py-2 border-b border-border/50 last:border-0">
       <span className="text-sm text-muted-foreground shrink-0">{label}</span>
       <span 
-        className={`text-sm font-medium text-right truncate ${mono ? "font-mono" : ""}`} 
+        className={`text-sm font-medium text-right break-words ${mono ? "font-mono" : ""}`} 
         data-testid={testId}
-        title={value?.toString()}
       >
         {value ?? "—"}
       </span>
