@@ -61,6 +61,7 @@ const TEST_SERVERS: TestServer[] = [
   { id: "ca-central", city: "Montreal", country: "Canada", countryCode: "🇨🇦", provider: "Google Cloud" },
   { id: "india", city: "Mumbai", country: "India", countryCode: "🇮🇳", provider: "AWS" },
   { id: "korea", city: "Seoul", country: "South Korea", countryCode: "🇰🇷", provider: "Google Cloud" },
+  { id: "bangladesh", city: "Dhaka", country: "Bangladesh", countryCode: "🇧🇩", provider: "AWS" },
 ];
 
 type TestPhase = "idle" | "ping" | "download" | "upload" | "complete";
