@@ -1,5 +1,4 @@
 import { useState, useCallback } from "react";
-import { useQuery } from "@tanstack/react-query";
 import { 
   Play, 
   Download, 
@@ -8,12 +7,20 @@ import {
   MapPin,
   Server,
   CheckCircle2,
-  Loader2
+  Loader2,
+  Globe
 } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
 import { Badge } from "@/components/ui/badge";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { 
   LineChart, 
   Line, 
@@ -30,16 +37,31 @@ interface SpeedTestResult {
   download: number;
   upload: number;
   ping: number;
+  server: string;
 }
 
-interface ServerInfo {
-  ip: string;
+interface TestServer {
+  id: string;
   city: string;
-  region: string;
   country: string;
   countryCode: string;
   provider: string;
 }
+
+const TEST_SERVERS: TestServer[] = [
+  { id: "us-west", city: "The Dalles", country: "United States", countryCode: "US", provider: "Google Cloud" },
+  { id: "us-east", city: "Ashburn", country: "United States", countryCode: "US", provider: "AWS" },
+  { id: "eu-west", city: "Dublin", country: "Ireland", countryCode: "IE", provider: "AWS" },
+  { id: "eu-central", city: "Frankfurt", country: "Germany", countryCode: "DE", provider: "Google Cloud" },
+  { id: "uk", city: "London", country: "United Kingdom", countryCode: "GB", provider: "Google Cloud" },
+  { id: "asia-east", city: "Tokyo", country: "Japan", countryCode: "JP", provider: "Google Cloud" },
+  { id: "asia-south", city: "Singapore", country: "Singapore", countryCode: "SG", provider: "AWS" },
+  { id: "asia-pacific", city: "Sydney", country: "Australia", countryCode: "AU", provider: "Google Cloud" },
+  { id: "sa-east", city: "São Paulo", country: "Brazil", countryCode: "BR", provider: "AWS" },
+  { id: "ca-central", city: "Montreal", country: "Canada", countryCode: "CA", provider: "Google Cloud" },
+  { id: "india", city: "Mumbai", country: "India", countryCode: "IN", provider: "AWS" },
+  { id: "korea", city: "Seoul", country: "South Korea", countryCode: "KR", provider: "Google Cloud" },
+];
 
 type TestPhase = "idle" | "ping" | "download" | "upload" | "complete";
 
@@ -51,11 +73,9 @@ export function SpeedTest() {
   const [currentUpload, setCurrentUpload] = useState<number | null>(null);
   const [currentPing, setCurrentPing] = useState<number | null>(null);
   const [results, setResults] = useState<SpeedTestResult[]>([]);
+  const [selectedServerId, setSelectedServerId] = useState<string>("us-west");
 
-  const { data: serverInfo, isLoading: serverLoading } = useQuery<ServerInfo>({
-    queryKey: ["/api/server-info"],
-    staleTime: 300000,
-  });
+  const selectedServer = TEST_SERVERS.find(s => s.id === selectedServerId) || TEST_SERVERS[0];
 
   const measurePing = useCallback(async (): Promise<number> => {
     const pings: number[] = [];
@@ -170,7 +190,8 @@ export function SpeedTest() {
           timestamp: Date.now(),
           download: Math.round(download * 100) / 100,
           upload: Math.round(upload * 100) / 100,
-          ping
+          ping,
+          server: selectedServer.countryCode
         }
       ]);
       
@@ -227,24 +248,39 @@ export function SpeedTest() {
           </Button>
         </CardHeader>
         <CardContent>
-          {/* Server Location */}
-          <div className="mb-6 flex items-center gap-3 rounded-lg bg-muted/50 p-3" data-testid="info-server-location">
-            <MapPin className="h-5 w-5 text-muted-foreground" />
-            <div className="flex-1">
-              <p className="text-sm font-medium">Test Server Location</p>
-              {serverLoading ? (
-                <p className="text-xs text-muted-foreground">Loading...</p>
-              ) : (
-                <p className="text-xs text-muted-foreground" data-testid="text-server-location">
-                  {serverInfo?.city}, {serverInfo?.region}, {serverInfo?.country}
-                </p>
-              )}
+          {/* Server Selector */}
+          <div className="mb-6 flex flex-col gap-3 rounded-lg bg-muted/50 p-4" data-testid="info-server-location">
+            <div className="flex items-center gap-2">
+              <Globe className="h-5 w-5 text-muted-foreground" />
+              <p className="text-sm font-medium">Select Test Server</p>
             </div>
-            {serverInfo?.countryCode && (
-              <Badge variant="outline" className="uppercase" data-testid="badge-server-country">
-                {serverInfo.countryCode}
-              </Badge>
-            )}
+            <Select
+              value={selectedServerId}
+              onValueChange={setSelectedServerId}
+              disabled={isRunning}
+            >
+              <SelectTrigger className="w-full" data-testid="select-server">
+                <SelectValue placeholder="Select a server" />
+              </SelectTrigger>
+              <SelectContent>
+                {TEST_SERVERS.map((server) => (
+                  <SelectItem key={server.id} value={server.id} data-testid={`server-option-${server.id}`}>
+                    <div className="flex items-center gap-2">
+                      <span className="font-medium">{server.city}</span>
+                      <span className="text-muted-foreground">-</span>
+                      <span className="text-muted-foreground">{server.country}</span>
+                      <Badge variant="outline" className="ml-2 uppercase text-xs">
+                        {server.countryCode}
+                      </Badge>
+                    </div>
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+            <div className="flex items-center gap-2 text-xs text-muted-foreground">
+              <MapPin className="h-3 w-3" />
+              <span data-testid="text-server-provider">Provider: {selectedServer.provider}</span>
+            </div>
           </div>
 
           {/* Progress indicator */}
