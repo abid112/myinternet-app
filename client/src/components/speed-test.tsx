@@ -42,40 +42,39 @@ interface SpeedTestResult {
 
 interface TestServer {
   id: string;
-  city: string;
-  country: string;
-  countryCode: string;
+  name: string;
   provider: string;
-  pingUrl: string; // Real endpoint to ping
+  pingUrl: string;
+  isImage: boolean; // Whether the URL is an image (for ping method selection)
 }
 
 // Real CDN endpoints - these route to the nearest edge server globally
-// Ping is measured from user's browser directly to these endpoints
+// Each CDN has edge servers worldwide and will route to the closest one
 const TEST_SERVERS: TestServer[] = [
-  { id: "cloudflare", city: "Nearest Edge", country: "Cloudflare CDN", countryCode: "🌐", provider: "Cloudflare (190+ cities)", pingUrl: "https://1.1.1.1/cdn-cgi/trace" },
-  { id: "google", city: "Nearest Edge", country: "Google CDN", countryCode: "🌐", provider: "Google (200+ locations)", pingUrl: "https://www.gstatic.com/generate_204" },
-  { id: "microsoft", city: "Nearest Edge", country: "Microsoft CDN", countryCode: "🌐", provider: "Azure CDN", pingUrl: "https://www.bing.com/favicon.ico" },
-  { id: "amazon", city: "Nearest Edge", country: "Amazon CDN", countryCode: "🌐", provider: "CloudFront", pingUrl: "https://d1.awsstatic.com/favicon.ico" },
-  { id: "this-server", city: "US (Replit)", country: "This App Server", countryCode: "🖥️", provider: "Replit", pingUrl: "/api/ping" },
+  { id: "cloudflare", name: "Cloudflare CDN", provider: "Cloudflare (190+ edge locations)", pingUrl: "https://www.cloudflare.com/favicon.ico", isImage: true },
+  { id: "google", name: "Google CDN", provider: "Google (200+ edge locations)", pingUrl: "https://www.google.com/favicon.ico", isImage: true },
+  { id: "microsoft", name: "Microsoft CDN", provider: "Azure CDN (global)", pingUrl: "https://www.bing.com/favicon.ico", isImage: true },
+  { id: "amazon", name: "Amazon CDN", provider: "CloudFront (global)", pingUrl: "https://d1.awsstatic.com/favicon.ico", isImage: true },
+  { id: "this-server", name: "This App Server", provider: "Replit (US)", pingUrl: "/api/ping", isImage: false },
 ];
 
-// Helper function to ping a URL using image loading technique (bypasses CORS)
-const pingUrl = async (url: string): Promise<number> => {
+// Helper function to ping a URL
+const pingUrl = async (url: string, isImage: boolean): Promise<number> => {
   return new Promise((resolve) => {
     const start = performance.now();
     
-    // For local API, use fetch
-    if (url.startsWith('/')) {
+    if (!isImage) {
+      // For API endpoints, use fetch
       fetch(url, { cache: 'no-store', mode: 'cors' })
         .then(() => resolve(performance.now() - start))
         .catch(() => resolve(performance.now() - start));
       return;
     }
     
-    // For external URLs, use image loading technique to bypass CORS
+    // For image URLs, use image loading (measures actual network round-trip)
     const img = new Image();
     img.onload = () => resolve(performance.now() - start);
-    img.onerror = () => resolve(performance.now() - start); // Still measures network time
+    img.onerror = () => resolve(performance.now() - start);
     img.src = url + '?_=' + Date.now(); // Cache bust
   });
 };
@@ -99,7 +98,7 @@ export function SpeedTest() {
     
     // Take 5 samples
     for (let i = 0; i < 5; i++) {
-      const pingTime = await pingUrl(server.pingUrl);
+      const pingTime = await pingUrl(server.pingUrl, server.isImage);
       pings.push(pingTime);
     }
     
@@ -207,7 +206,7 @@ export function SpeedTest() {
           download: Math.round(download * 100) / 100,
           upload: Math.round(upload * 100) / 100,
           ping,
-          server: selectedServer.countryCode
+          server: selectedServer.name
         }
       ]);
       
@@ -282,10 +281,8 @@ export function SpeedTest() {
                 {TEST_SERVERS.map((server) => (
                   <SelectItem key={server.id} value={server.id} data-testid={`server-option-${server.id}`}>
                     <div className="flex items-center gap-2">
-                      <span className="text-lg">{server.countryCode}</span>
-                      <span className="font-medium">{server.city}</span>
-                      <span className="text-muted-foreground">-</span>
-                      <span className="text-muted-foreground">{server.country}</span>
+                      <Globe className="h-4 w-4 text-muted-foreground" />
+                      <span className="font-medium">{server.name}</span>
                     </div>
                   </SelectItem>
                 ))}
