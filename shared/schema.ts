@@ -17,6 +17,20 @@ export const networkInfoSchema = z.object({
 
 export type NetworkInfo = z.infer<typeof networkInfoSchema>;
 
+export const serverInfoSchema = z.object({
+  ip: z.string(),
+  city: z.string().optional(),
+  region: z.string().optional(),
+  country: z.string().optional(),
+  countryCode: z.string().optional(),
+  latitude: z.number().optional(),
+  longitude: z.number().optional(),
+  timezone: z.string().optional(),
+  provider: z.string().optional(),
+});
+
+export type ServerInfo = z.infer<typeof serverInfoSchema>;
+
 export const browserInfoSchema = z.object({
   userAgent: z.string(),
   platform: z.string(),
