@@ -252,7 +252,7 @@ export function SpeedTest() {
           <div className="mb-6 flex flex-col gap-3 rounded-lg bg-muted/50 p-4" data-testid="info-server-location">
             <div className="flex items-center gap-2">
               <Globe className="h-5 w-5 text-muted-foreground" />
-              <p className="text-sm font-medium">Select Test Server</p>
+              <p className="text-sm font-medium">Select Test Server Location</p>
             </div>
             <Select
               value={selectedServerId}
