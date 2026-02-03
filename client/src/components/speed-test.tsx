@@ -49,18 +49,18 @@ interface TestServer {
 }
 
 const TEST_SERVERS: TestServer[] = [
-  { id: "us-west", city: "The Dalles", country: "United States", countryCode: "US", provider: "Google Cloud" },
-  { id: "us-east", city: "Ashburn", country: "United States", countryCode: "US", provider: "AWS" },
-  { id: "eu-west", city: "Dublin", country: "Ireland", countryCode: "IE", provider: "AWS" },
-  { id: "eu-central", city: "Frankfurt", country: "Germany", countryCode: "DE", provider: "Google Cloud" },
-  { id: "uk", city: "London", country: "United Kingdom", countryCode: "GB", provider: "Google Cloud" },
-  { id: "asia-east", city: "Tokyo", country: "Japan", countryCode: "JP", provider: "Google Cloud" },
-  { id: "asia-south", city: "Singapore", country: "Singapore", countryCode: "SG", provider: "AWS" },
-  { id: "asia-pacific", city: "Sydney", country: "Australia", countryCode: "AU", provider: "Google Cloud" },
-  { id: "sa-east", city: "São Paulo", country: "Brazil", countryCode: "BR", provider: "AWS" },
-  { id: "ca-central", city: "Montreal", country: "Canada", countryCode: "CA", provider: "Google Cloud" },
-  { id: "india", city: "Mumbai", country: "India", countryCode: "IN", provider: "AWS" },
-  { id: "korea", city: "Seoul", country: "South Korea", countryCode: "KR", provider: "Google Cloud" },
+  { id: "us-west", city: "The Dalles", country: "United States", countryCode: "🇺🇸", provider: "Google Cloud" },
+  { id: "us-east", city: "Ashburn", country: "United States", countryCode: "🇺🇸", provider: "AWS" },
+  { id: "eu-west", city: "Dublin", country: "Ireland", countryCode: "🇮🇪", provider: "AWS" },
+  { id: "eu-central", city: "Frankfurt", country: "Germany", countryCode: "🇩🇪", provider: "Google Cloud" },
+  { id: "uk", city: "London", country: "United Kingdom", countryCode: "🇬🇧", provider: "Google Cloud" },
+  { id: "asia-east", city: "Tokyo", country: "Japan", countryCode: "🇯🇵", provider: "Google Cloud" },
+  { id: "asia-south", city: "Singapore", country: "Singapore", countryCode: "🇸🇬", provider: "AWS" },
+  { id: "asia-pacific", city: "Sydney", country: "Australia", countryCode: "🇦🇺", provider: "Google Cloud" },
+  { id: "sa-east", city: "São Paulo", country: "Brazil", countryCode: "🇧🇷", provider: "AWS" },
+  { id: "ca-central", city: "Montreal", country: "Canada", countryCode: "🇨🇦", provider: "Google Cloud" },
+  { id: "india", city: "Mumbai", country: "India", countryCode: "🇮🇳", provider: "AWS" },
+  { id: "korea", city: "Seoul", country: "South Korea", countryCode: "🇰🇷", provider: "Google Cloud" },
 ];
 
 type TestPhase = "idle" | "ping" | "download" | "upload" | "complete";
@@ -266,12 +266,10 @@ export function SpeedTest() {
                 {TEST_SERVERS.map((server) => (
                   <SelectItem key={server.id} value={server.id} data-testid={`server-option-${server.id}`}>
                     <div className="flex items-center gap-2">
+                      <span className="text-lg">{server.countryCode}</span>
                       <span className="font-medium">{server.city}</span>
                       <span className="text-muted-foreground">-</span>
                       <span className="text-muted-foreground">{server.country}</span>
-                      <Badge variant="outline" className="ml-2 uppercase text-xs">
-                        {server.countryCode}
-                      </Badge>
                     </div>
                   </SelectItem>
                 ))}
