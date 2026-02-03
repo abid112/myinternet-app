@@ -170,41 +170,74 @@ export async function registerRoutes(
     });
   });
 
-  // Server info endpoint - returns server location
-  app.get("/api/server-info", async (req, res) => {
+  // Weather endpoint - uses Open-Meteo (free, no API key required)
+  app.get("/api/weather", async (req, res) => {
     try {
-      // Get server's public IP and location
-      const response = await fetch(
-        "http://ip-api.com/json/?fields=status,country,countryCode,regionName,city,lat,lon,timezone,query"
-      );
+      const lat = req.query.lat as string;
+      const lon = req.query.lon as string;
       
-      if (!response.ok) {
-        throw new Error("Failed to fetch server info");
+      if (!lat || !lon) {
+        return res.status(400).json({ error: "Latitude and longitude required" });
       }
       
-      const data = await response.json();
+      // Fetch weather data from Open-Meteo
+      const weatherResponse = await fetch(
+        `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&current=temperature_2m,relative_humidity_2m,apparent_temperature,weather_code,wind_speed_10m,wind_direction_10m,pressure_msl,uv_index&timezone=auto`
+      );
+      
+      if (!weatherResponse.ok) {
+        throw new Error("Failed to fetch weather data");
+      }
+      
+      const data = await weatherResponse.json();
+      const current = data.current;
+      
+      // Map weather codes to descriptions
+      const weatherDescriptions: Record<number, { description: string; icon: string }> = {
+        0: { description: "Clear sky", icon: "sun" },
+        1: { description: "Mainly clear", icon: "sun" },
+        2: { description: "Partly cloudy", icon: "cloud-sun" },
+        3: { description: "Overcast", icon: "cloud" },
+        45: { description: "Foggy", icon: "cloud-fog" },
+        48: { description: "Depositing rime fog", icon: "cloud-fog" },
+        51: { description: "Light drizzle", icon: "cloud-drizzle" },
+        53: { description: "Moderate drizzle", icon: "cloud-drizzle" },
+        55: { description: "Dense drizzle", icon: "cloud-drizzle" },
+        61: { description: "Slight rain", icon: "cloud-rain" },
+        63: { description: "Moderate rain", icon: "cloud-rain" },
+        65: { description: "Heavy rain", icon: "cloud-rain" },
+        71: { description: "Slight snow", icon: "snowflake" },
+        73: { description: "Moderate snow", icon: "snowflake" },
+        75: { description: "Heavy snow", icon: "snowflake" },
+        80: { description: "Slight rain showers", icon: "cloud-rain" },
+        81: { description: "Moderate rain showers", icon: "cloud-rain" },
+        82: { description: "Violent rain showers", icon: "cloud-rain" },
+        95: { description: "Thunderstorm", icon: "cloud-lightning" },
+        96: { description: "Thunderstorm with hail", icon: "cloud-lightning" },
+        99: { description: "Thunderstorm with heavy hail", icon: "cloud-lightning" },
+      };
+      
+      const weatherCode = current.weather_code || 0;
+      const weatherInfo = weatherDescriptions[weatherCode] || { description: "Unknown", icon: "cloud" };
       
       res.json({
-        ip: data.query,
-        city: data.city,
-        region: data.regionName,
-        country: data.country,
-        countryCode: data.countryCode,
-        latitude: data.lat,
-        longitude: data.lon,
-        timezone: data.timezone,
-        provider: "Replit (Google Cloud)"
+        temperature: current.temperature_2m,
+        temperatureUnit: data.current_units?.temperature_2m || "°C",
+        feelsLike: current.apparent_temperature,
+        humidity: current.relative_humidity_2m,
+        windSpeed: current.wind_speed_10m,
+        windSpeedUnit: data.current_units?.wind_speed_10m || "km/h",
+        windDirection: current.wind_direction_10m,
+        pressure: current.pressure_msl,
+        uvIndex: current.uv_index,
+        weatherCode: weatherCode,
+        description: weatherInfo.description,
+        icon: weatherInfo.icon,
+        timezone: data.timezone
       });
     } catch (error) {
-      console.error("Error fetching server info:", error);
-      res.json({
-        ip: "Unknown",
-        city: "The Dalles",
-        region: "Oregon",
-        country: "United States",
-        countryCode: "US",
-        provider: "Replit (Google Cloud)"
-      });
+      console.error("Error fetching weather:", error);
+      res.status(500).json({ error: "Failed to fetch weather data" });
     }
   });
 

@@ -6,13 +6,22 @@ import {
   Wifi, 
   Monitor, 
   Activity, 
-  Server, 
   RefreshCw,
   Signal,
   Clock,
-  Cpu,
-  Languages,
-  Smartphone
+  Smartphone,
+  CloudSun,
+  Sun,
+  Cloud,
+  CloudRain,
+  CloudSnow,
+  CloudLightning,
+  CloudFog,
+  CloudDrizzle,
+  Thermometer,
+  Droplets,
+  Wind,
+  Gauge
 } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -23,6 +32,42 @@ import { ThemeToggle } from "@/components/theme-toggle";
 import { InfoCard, InfoRow } from "@/components/info-card";
 import { SpeedTest } from "@/components/speed-test";
 import type { NetworkInfo, BrowserInfo } from "@shared/schema";
+
+interface WeatherData {
+  temperature: number;
+  temperatureUnit: string;
+  feelsLike: number;
+  humidity: number;
+  windSpeed: number;
+  windSpeedUnit: string;
+  windDirection: number;
+  pressure: number;
+  uvIndex: number;
+  weatherCode: number;
+  description: string;
+  icon: string;
+  timezone: string;
+}
+
+function getWeatherIcon(icon: string) {
+  switch (icon) {
+    case "sun": return Sun;
+    case "cloud-sun": return CloudSun;
+    case "cloud": return Cloud;
+    case "cloud-rain": return CloudRain;
+    case "snowflake": return CloudSnow;
+    case "cloud-lightning": return CloudLightning;
+    case "cloud-fog": return CloudFog;
+    case "cloud-drizzle": return CloudDrizzle;
+    default: return Cloud;
+  }
+}
+
+function getWindDirection(degrees: number): string {
+  const directions = ["N", "NE", "E", "SE", "S", "SW", "W", "NW"];
+  const index = Math.round(degrees / 45) % 8;
+  return directions[index];
+}
 
 function getBrowserInfo(): BrowserInfo {
   const nav = navigator as Navigator & { connection?: { type?: string; effectiveType?: string; downlink?: number; rtt?: number } };
@@ -85,6 +130,20 @@ export default function Home() {
   const { data: networkInfo, isLoading, error, refetch, isFetching } = useQuery<NetworkInfo>({
     queryKey: ["/api/network-info"],
     staleTime: 60000,
+  });
+
+  const { data: weatherData, isLoading: weatherLoading } = useQuery<WeatherData>({
+    queryKey: ["/api/weather", networkInfo?.latitude, networkInfo?.longitude],
+    queryFn: async () => {
+      if (!networkInfo?.latitude || !networkInfo?.longitude) {
+        throw new Error("Location not available");
+      }
+      const response = await fetch(`/api/weather?lat=${networkInfo.latitude}&lon=${networkInfo.longitude}`);
+      if (!response.ok) throw new Error("Failed to fetch weather");
+      return response.json();
+    },
+    enabled: !!networkInfo?.latitude && !!networkInfo?.longitude,
+    staleTime: 300000,
   });
 
   useEffect(() => {
@@ -277,23 +336,67 @@ export default function Home() {
             />
           </InfoCard>
 
-          <InfoCard title="Server Info" icon={Server} isLoading={isLoading} data-testid="card-server">
-            <div className="space-y-3">
-              <div className="flex items-center gap-3 rounded-lg bg-muted/50 p-3" data-testid="info-platform">
-                <Cpu className="h-5 w-5 text-muted-foreground" />
-                <div>
-                  <p className="text-sm font-medium">Powered by Replit</p>
-                  <p className="text-xs text-muted-foreground">Node.js + Express</p>
+          <InfoCard title="Weather" icon={CloudSun} isLoading={weatherLoading || isLoading} data-testid="card-weather">
+            {weatherData ? (
+              <div className="space-y-4">
+                <div className="flex items-center justify-between rounded-lg bg-muted/50 p-4" data-testid="weather-main">
+                  <div className="flex items-center gap-3">
+                    {(() => {
+                      const WeatherIcon = getWeatherIcon(weatherData.icon);
+                      return <WeatherIcon className="h-10 w-10 text-primary" />;
+                    })()}
+                    <div>
+                      <p className="text-3xl font-bold" data-testid="text-temperature">
+                        {Math.round(weatherData.temperature)}{weatherData.temperatureUnit}
+                      </p>
+                      <p className="text-sm text-muted-foreground" data-testid="text-weather-description">
+                        {weatherData.description}
+                      </p>
+                    </div>
+                  </div>
+                  <Badge variant="secondary" data-testid="badge-feels-like">
+                    Feels {Math.round(weatherData.feelsLike)}{weatherData.temperatureUnit}
+                  </Badge>
+                </div>
+                
+                <div className="grid grid-cols-2 gap-3">
+                  <div className="flex items-center gap-2 rounded-lg bg-muted/50 p-3" data-testid="weather-humidity">
+                    <Droplets className="h-4 w-4 text-blue-500" />
+                    <div>
+                      <p className="text-xs text-muted-foreground">Humidity</p>
+                      <p className="text-sm font-medium" data-testid="text-humidity">{weatherData.humidity}%</p>
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-2 rounded-lg bg-muted/50 p-3" data-testid="weather-wind">
+                    <Wind className="h-4 w-4 text-teal-500" />
+                    <div>
+                      <p className="text-xs text-muted-foreground">Wind</p>
+                      <p className="text-sm font-medium" data-testid="text-wind">
+                        {Math.round(weatherData.windSpeed)} {weatherData.windSpeedUnit} {getWindDirection(weatherData.windDirection)}
+                      </p>
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-2 rounded-lg bg-muted/50 p-3" data-testid="weather-pressure">
+                    <Gauge className="h-4 w-4 text-purple-500" />
+                    <div>
+                      <p className="text-xs text-muted-foreground">Pressure</p>
+                      <p className="text-sm font-medium" data-testid="text-pressure">{Math.round(weatherData.pressure)} hPa</p>
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-2 rounded-lg bg-muted/50 p-3" data-testid="weather-uv">
+                    <Sun className="h-4 w-4 text-yellow-500" />
+                    <div>
+                      <p className="text-xs text-muted-foreground">UV Index</p>
+                      <p className="text-sm font-medium" data-testid="text-uv">{weatherData.uvIndex}</p>
+                    </div>
+                  </div>
                 </div>
               </div>
-              <div className="flex items-center gap-3 rounded-lg bg-muted/50 p-3" data-testid="info-geolocation">
-                <Languages className="h-5 w-5 text-muted-foreground" />
-                <div>
-                  <p className="text-sm font-medium">IP Geolocation</p>
-                  <p className="text-xs text-muted-foreground">Real-time location data</p>
-                </div>
-              </div>
-            </div>
+            ) : (
+              <p className="text-sm text-muted-foreground" data-testid="text-weather-unavailable">
+                Weather data unavailable. Location required.
+              </p>
+            )}
           </InfoCard>
         </div>
 
