@@ -46,23 +46,39 @@ interface TestServer {
   country: string;
   countryCode: string;
   provider: string;
+  pingUrl: string; // Real endpoint to ping
 }
 
+// Real CDN endpoints - these route to the nearest edge server globally
+// Ping is measured from user's browser directly to these endpoints
 const TEST_SERVERS: TestServer[] = [
-  { id: "us-west", city: "The Dalles", country: "United States", countryCode: "🇺🇸", provider: "Google Cloud" },
-  { id: "us-east", city: "Ashburn", country: "United States", countryCode: "🇺🇸", provider: "AWS" },
-  { id: "eu-west", city: "Dublin", country: "Ireland", countryCode: "🇮🇪", provider: "AWS" },
-  { id: "eu-central", city: "Frankfurt", country: "Germany", countryCode: "🇩🇪", provider: "Google Cloud" },
-  { id: "uk", city: "London", country: "United Kingdom", countryCode: "🇬🇧", provider: "Google Cloud" },
-  { id: "asia-east", city: "Tokyo", country: "Japan", countryCode: "🇯🇵", provider: "Google Cloud" },
-  { id: "asia-south", city: "Singapore", country: "Singapore", countryCode: "🇸🇬", provider: "AWS" },
-  { id: "asia-pacific", city: "Sydney", country: "Australia", countryCode: "🇦🇺", provider: "Google Cloud" },
-  { id: "sa-east", city: "São Paulo", country: "Brazil", countryCode: "🇧🇷", provider: "AWS" },
-  { id: "ca-central", city: "Montreal", country: "Canada", countryCode: "🇨🇦", provider: "Google Cloud" },
-  { id: "india", city: "Mumbai", country: "India", countryCode: "🇮🇳", provider: "AWS" },
-  { id: "korea", city: "Seoul", country: "South Korea", countryCode: "🇰🇷", provider: "Google Cloud" },
-  { id: "bangladesh", city: "Dhaka", country: "Bangladesh", countryCode: "🇧🇩", provider: "AWS" },
+  { id: "cloudflare", city: "Nearest Edge", country: "Cloudflare CDN", countryCode: "🌐", provider: "Cloudflare (190+ cities)", pingUrl: "https://1.1.1.1/cdn-cgi/trace" },
+  { id: "google", city: "Nearest Edge", country: "Google CDN", countryCode: "🌐", provider: "Google (200+ locations)", pingUrl: "https://www.gstatic.com/generate_204" },
+  { id: "microsoft", city: "Nearest Edge", country: "Microsoft CDN", countryCode: "🌐", provider: "Azure CDN", pingUrl: "https://www.bing.com/favicon.ico" },
+  { id: "amazon", city: "Nearest Edge", country: "Amazon CDN", countryCode: "🌐", provider: "CloudFront", pingUrl: "https://d1.awsstatic.com/favicon.ico" },
+  { id: "this-server", city: "US (Replit)", country: "This App Server", countryCode: "🖥️", provider: "Replit", pingUrl: "/api/ping" },
 ];
+
+// Helper function to ping a URL using image loading technique (bypasses CORS)
+const pingUrl = async (url: string): Promise<number> => {
+  return new Promise((resolve) => {
+    const start = performance.now();
+    
+    // For local API, use fetch
+    if (url.startsWith('/')) {
+      fetch(url, { cache: 'no-store', mode: 'cors' })
+        .then(() => resolve(performance.now() - start))
+        .catch(() => resolve(performance.now() - start));
+      return;
+    }
+    
+    // For external URLs, use image loading technique to bypass CORS
+    const img = new Image();
+    img.onload = () => resolve(performance.now() - start);
+    img.onerror = () => resolve(performance.now() - start); // Still measures network time
+    img.src = url + '?_=' + Date.now(); // Cache bust
+  });
+};
 
 type TestPhase = "idle" | "ping" | "download" | "upload" | "complete";
 
@@ -74,21 +90,20 @@ export function SpeedTest() {
   const [currentUpload, setCurrentUpload] = useState<number | null>(null);
   const [currentPing, setCurrentPing] = useState<number | null>(null);
   const [results, setResults] = useState<SpeedTestResult[]>([]);
-  const [selectedServerId, setSelectedServerId] = useState<string>("us-west");
+  const [selectedServerId, setSelectedServerId] = useState<string>("cloudflare");
 
   const selectedServer = TEST_SERVERS.find(s => s.id === selectedServerId) || TEST_SERVERS[0];
 
-  const measurePing = useCallback(async (): Promise<number> => {
+  const measurePing = useCallback(async (server: TestServer): Promise<number> => {
     const pings: number[] = [];
     
+    // Take 5 samples
     for (let i = 0; i < 5; i++) {
-      const start = performance.now();
-      await fetch("/api/ping", { cache: "no-store" });
-      const end = performance.now();
-      pings.push(end - start);
+      const pingTime = await pingUrl(server.pingUrl);
+      pings.push(pingTime);
     }
     
-    // Return average ping, excluding outliers
+    // Return average ping, excluding outliers (best and worst)
     pings.sort((a, b) => a - b);
     const trimmed = pings.slice(1, -1);
     return Math.round(trimmed.reduce((a, b) => a + b, 0) / trimmed.length);
@@ -163,10 +178,10 @@ export function SpeedTest() {
     setCurrentPing(null);
     
     try {
-      // Phase 1: Ping
+      // Phase 1: Ping (to selected server)
       setPhase("ping");
       setProgress(0);
-      const ping = await measurePing();
+      const ping = await measurePing(selectedServer);
       setCurrentPing(ping);
       setProgress(100);
       
@@ -201,7 +216,7 @@ export function SpeedTest() {
     } finally {
       setIsRunning(false);
     }
-  }, [isRunning, measurePing, measureDownload, measureUpload]);
+  }, [isRunning, measurePing, measureDownload, measureUpload, selectedServer]);
 
   const formatTime = (timestamp: number) => {
     return new Date(timestamp).toLocaleTimeString([], { 
@@ -253,7 +268,7 @@ export function SpeedTest() {
           <div className="mb-6 flex flex-col gap-3 rounded-lg bg-muted/50 p-4" data-testid="info-server-location">
             <div className="flex items-center gap-2">
               <Globe className="h-5 w-5 text-muted-foreground" />
-              <p className="text-sm font-medium">Select Test Server Location</p>
+              <p className="text-sm font-medium">Select Ping Server (Real CDN Endpoints)</p>
             </div>
             <Select
               value={selectedServerId}
@@ -280,6 +295,9 @@ export function SpeedTest() {
               <MapPin className="h-3 w-3" />
               <span data-testid="text-server-provider">Provider: {selectedServer.provider}</span>
             </div>
+            <p className="text-xs text-muted-foreground/70">
+              Ping tests your connection to real CDN servers. Download/Upload tests run against this app's server.
+            </p>
           </div>
 
           {/* Progress indicator */}
@@ -298,7 +316,7 @@ export function SpeedTest() {
             <div className="flex flex-col items-center justify-center rounded-lg bg-muted/50 p-4" data-testid="result-ping">
               <div className="flex items-center gap-2 text-muted-foreground mb-2">
                 <Server className="h-4 w-4" />
-                <span className="text-sm">Ping</span>
+                <span className="text-sm">Ping to {selectedServer.provider.split(' ')[0]}</span>
               </div>
               <p className="text-2xl font-bold" data-testid="text-ping-value">
                 {currentPing !== null ? `${currentPing}` : "—"}
