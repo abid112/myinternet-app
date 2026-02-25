@@ -10,14 +10,10 @@ Preferred communication style: Simple, everyday language.
 
 ## Recent Changes
 
-- **2026-02-03**: Added Speed Test feature
-  - Real-time download/upload speed testing with streaming data endpoints
-  - Ping latency measurement using Cloudflare CDN (routes to nearest edge server)
-  - Speed test history graph using recharts (keeps last 10 results)
-  - Progress indicators for each test phase
+- **2026-02-03**: Removed Speed Test and Speed Test History features
 
 - **2026-02-03**: Initial MVP implementation
-  - Created network dashboard UI with 6 info cards (Location, Connection, Network Speed, Browser, Display, Server Info)
+  - Created network dashboard UI with info cards (Location, Connection, Network Speed, Browser, Display, Weather)
   - Implemented IP geolocation API integration with ip-api.com
   - Added dark/light theme toggle with system preference detection
   - Added comprehensive data-testid attributes for testing
@@ -43,9 +39,7 @@ Preferred communication style: Simple, everyday language.
 ### API Endpoints
 - `GET /api/network-info` - Returns IP geolocation and network information
 - `GET /api/ping` - Simple ping endpoint for latency measurement
-- `GET /api/speed-test/download?size=X` - Downloads random data for speed testing (default 1MB, max 10MB)
-- `POST /api/speed-test/upload` - Receives data for upload speed testing (max 10MB)
-- `GET /api/server-info` - Returns server location info for speed test display
+- `GET /api/weather` - Returns weather data based on lat/lon from Open-Meteo API
 
 ### Project Structure
 ```

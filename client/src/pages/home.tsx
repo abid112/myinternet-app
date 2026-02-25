@@ -30,7 +30,6 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { Progress } from "@/components/ui/progress";
 import { ThemeToggle } from "@/components/theme-toggle";
 import { InfoCard, InfoRow } from "@/components/info-card";
-import { SpeedTest } from "@/components/speed-test";
 import type { NetworkInfo, BrowserInfo } from "@shared/schema";
 
 interface WeatherData {
@@ -255,11 +254,6 @@ export default function Home() {
               </div>
             </div>
           </Card>
-        </div>
-
-        {/* Speed Test Section */}
-        <div className="mb-8">
-          <SpeedTest />
         </div>
 
         <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
