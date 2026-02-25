@@ -8,7 +8,7 @@ import {
   Activity, 
   RefreshCw,
   Signal,
-  Clock,
+
   Smartphone,
   CloudSun,
   Sun,
@@ -238,12 +238,6 @@ export default function Home() {
                     <span className={`mr-1.5 h-2 w-2 rounded-full ${browserInfo?.online ? "bg-green-500" : "bg-red-500"}`} />
                     {browserInfo?.online ? "Online" : "Offline"}
                   </Badge>
-                  {latency !== null && (
-                    <Badge variant="outline" data-testid="badge-latency">
-                      <Clock className="mr-1.5 h-3 w-3" />
-                      {latency}ms latency
-                    </Badge>
-                  )}
                   {networkInfo?.countryCode && (
                     <Badge variant="outline" className="uppercase" data-testid="badge-country">
                       <MapPin className="mr-1.5 h-3 w-3" />
