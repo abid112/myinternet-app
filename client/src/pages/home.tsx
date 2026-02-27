@@ -165,38 +165,39 @@ export default function Home() {
 
   return (
     <div className="min-h-screen bg-background" data-testid="page-home">
-      <header className="sticky top-0 z-50 border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60" data-testid="header">
-        <div className="container mx-auto flex h-16 items-center justify-between gap-4 px-4">
-          <div className="flex items-center gap-3" data-testid="header-logo">
-            <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-primary">
-              <Globe className="h-5 w-5 text-primary-foreground" />
+      <header className="sticky top-0 z-50 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60" data-testid="header">
+        <div className="container mx-auto px-4">
+          <div className="flex h-14 items-center justify-between gap-4">
+            <div className="flex items-center gap-2.5" data-testid="header-logo">
+              <div className="relative flex h-8 w-8 items-center justify-center">
+                <div className="absolute inset-0 rounded-lg bg-gradient-to-br from-blue-500 to-cyan-400 opacity-20 dark:opacity-30" />
+                <Wifi className="relative h-4 w-4 text-blue-600 dark:text-cyan-400" />
+              </div>
+              <span className="text-base font-semibold tracking-tight">My Internet</span>
             </div>
-            <div>
-              <h1 className="text-lg font-semibold">NetScope</h1>
-              <p className="text-xs text-muted-foreground">Network Information</p>
+            <div className="flex items-center gap-1.5">
+              <Button
+                variant="ghost"
+                size="icon"
+                className="h-8 w-8"
+                onClick={() => refetch()}
+                disabled={isFetching}
+                data-testid="button-refresh"
+              >
+                <RefreshCw className={`h-4 w-4 ${isFetching ? "animate-spin" : ""}`} />
+              </Button>
+              <ThemeToggle />
             </div>
           </div>
-          <div className="flex items-center gap-2">
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => refetch()}
-              disabled={isFetching}
-              data-testid="button-refresh"
-            >
-              <RefreshCw className={`mr-2 h-4 w-4 ${isFetching ? "animate-spin" : ""}`} />
-              Refresh
-            </Button>
-            <ThemeToggle />
-          </div>
+          <div className="h-px bg-gradient-to-r from-transparent via-border to-transparent" />
         </div>
       </header>
 
       <main className="container mx-auto px-4 py-8" data-testid="main-content">
-        <div className="mb-8 text-center">
-          <h2 className="text-3xl font-bold tracking-tight" data-testid="text-page-title">Your Network at a Glance</h2>
-          <p className="mt-2 text-muted-foreground" data-testid="text-page-subtitle">
-            Real-time information about your network connection and browser
+        <div className="mb-6">
+          <h2 className="text-2xl font-bold tracking-tight" data-testid="text-page-title">Your Network at a Glance</h2>
+          <p className="mt-1 text-sm text-muted-foreground" data-testid="text-page-subtitle">
+            Real-time connection, location, and browser insights
           </p>
         </div>
 

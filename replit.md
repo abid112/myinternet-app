@@ -1,8 +1,8 @@
-# NetScope - Network Information Dashboard
+# My Internet – Smart Network Stats & IP Insights
 
 ## Overview
 
-NetScope is a network information dashboard that displays a user's IP address, geolocation, browser details, and connection information in real-time. The application follows a full-stack TypeScript architecture with a React frontend and Express backend.
+My Internet is a network information dashboard that displays a user's IP address, geolocation, browser details, and connection information in real-time. The application follows a full-stack TypeScript architecture with a React frontend and Express backend.
 
 ## User Preferences
 
