@@ -263,13 +263,6 @@ export default function Home() {
       </header>
 
       <main className="container mx-auto px-4 py-8" data-testid="main-content">
-        <div className="mb-6">
-          <h2 className="text-2xl font-bold tracking-tight" data-testid="text-page-title">Your Network at a Glance</h2>
-          <p className="mt-1 text-sm text-muted-foreground" data-testid="text-page-subtitle">
-            Real-time connection, location, and other insights
-          </p>
-        </div>
-
         {error && (
           <Card className="mb-6 border-destructive/50 bg-destructive/5" data-testid="card-error">
             <CardContent className="flex items-center gap-3 py-4">
