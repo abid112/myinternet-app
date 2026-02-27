@@ -292,11 +292,10 @@ export default function Home() {
               testId="text-downlink"
             />
             <InfoRow 
-              label="Round-Trip Time" 
-              value={browserInfo?.rtt ? `${browserInfo.rtt}ms` : undefined} 
-              testId="text-rtt"
+              label={`Latency${networkInfo?.city ? ` (${networkInfo.city} to USA)` : ""}`}
+              value={latency !== null ? `${latency}ms` : undefined} 
+              testId="text-server-latency"
             />
-            <InfoRow label="Server Latency" value={latency !== null ? `${latency}ms` : undefined} testId="text-server-latency" />
           </InfoCard>
 
           <InfoCard title="Browser" icon={Monitor} isLoading={!browserInfo} data-testid="card-browser">
