@@ -266,7 +266,7 @@ export default function Home() {
         <div className="mb-6">
           <h2 className="text-2xl font-bold tracking-tight" data-testid="text-page-title">Your Network at a Glance</h2>
           <p className="mt-1 text-sm text-muted-foreground" data-testid="text-page-subtitle">
-            Real-time connection, location, and browser insights
+            Real-time connection, location, and other insights
           </p>
         </div>
 
