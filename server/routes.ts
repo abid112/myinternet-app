@@ -101,6 +101,24 @@ export async function registerRoutes(
     res.json({ pong: Date.now() });
   });
 
+  app.post("/api/upload-test", (req, res) => {
+    let bytesReceived = 0;
+    const startTime = Date.now();
+
+    req.on("data", (chunk: Buffer) => {
+      bytesReceived += chunk.length;
+    });
+
+    req.on("end", () => {
+      const durationMs = Date.now() - startTime;
+      res.json({ bytesReceived, durationMs });
+    });
+
+    req.on("error", () => {
+      res.status(500).json({ error: "Upload test failed" });
+    });
+  });
+
   // Weather endpoint - uses Open-Meteo (free, no API key required)
   app.get("/api/weather", async (req, res) => {
     try {

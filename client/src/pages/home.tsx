@@ -125,6 +125,7 @@ function getConnectionQuality(effectiveType?: string): { label: string; color: s
 export default function Home() {
   const [browserInfo, setBrowserInfo] = useState<BrowserInfo | null>(null);
   const [latency, setLatency] = useState<number | null>(null);
+  const [uploadSpeed, setUploadSpeed] = useState<number | null>(null);
 
   const { data: networkInfo, isLoading, error, refetch, isFetching } = useQuery<NetworkInfo>({
     queryKey: ["/api/network-info"],
@@ -158,7 +159,28 @@ export default function Home() {
         setLatency(null);
       }
     };
+
+    const measureUpload = async () => {
+      try {
+        const payload = new Uint8Array(100 * 1024);
+        const start = performance.now();
+        await fetch("/api/upload-test", {
+          method: "POST",
+          body: payload,
+          cache: "no-store",
+        });
+        const end = performance.now();
+        const durationSec = (end - start) / 1000;
+        const bits = payload.byteLength * 8;
+        const mbps = bits / durationSec / 1_000_000;
+        setUploadSpeed(Math.round(mbps * 100) / 100);
+      } catch {
+        setUploadSpeed(null);
+      }
+    };
+
     measureLatency();
+    measureUpload();
   }, []);
 
   const connectionQuality = browserInfo ? getConnectionQuality(browserInfo.effectiveType) : null;
@@ -287,9 +309,14 @@ export default function Home() {
           <InfoCard title="Network Speed" icon={Signal} isLoading={!browserInfo} data-testid="card-network-speed">
             <InfoRow label="Connection Type" value={browserInfo?.connectionType || browserInfo?.effectiveType} testId="text-connection-type" />
             <InfoRow 
-              label="Downlink" 
+              label="Download Speed" 
               value={browserInfo?.downlink ? `${browserInfo.downlink} Mbps` : undefined} 
-              testId="text-downlink"
+              testId="text-download-speed"
+            />
+            <InfoRow 
+              label="Upload Speed" 
+              value={uploadSpeed !== null ? `${uploadSpeed} Mbps` : undefined} 
+              testId="text-upload-speed"
             />
             <InfoRow 
               label={`Latency${networkInfo?.city ? ` (${networkInfo.city} to USA)` : ""}`}

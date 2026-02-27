@@ -39,6 +39,7 @@ Preferred communication style: Simple, everyday language.
 ### API Endpoints
 - `GET /api/network-info` - Returns IP geolocation and network information
 - `GET /api/ping` - Simple ping endpoint for latency measurement
+- `POST /api/upload-test` - Lightweight upload speed measurement (receives ~100KB payload, returns timing)
 - `GET /api/weather` - Returns weather data based on lat/lon from Open-Meteo API
 
 ### Project Structure
