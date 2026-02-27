@@ -393,6 +393,19 @@ export default function Home() {
           <p className="text-sm text-muted-foreground" data-testid="text-privacy-notice">
             Your data is fetched in real-time and is not stored on our servers.
           </p>
+          <p className="mt-2 text-sm text-muted-foreground" data-testid="text-made-by">
+            Made with ❤️ by Abid Hasan. If you like this tool or find it helpful,{" "}
+            <a
+              href="https://buymeacoffee.com/abid_hasan112"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="font-medium text-primary underline underline-offset-4 hover:text-primary/80"
+              data-testid="link-buy-me-coffee"
+            >
+              Buy Me a Coffee from here
+            </a>
+            .
+          </p>
         </footer>
       </main>
     </div>
