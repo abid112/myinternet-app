@@ -1,5 +1,7 @@
 import { useQuery } from "@tanstack/react-query";
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef, useCallback } from "react";
+import L from "leaflet";
+import "leaflet/dist/leaflet.css";
 import { 
   Globe, 
   MapPin, 
@@ -127,6 +129,9 @@ export default function Home() {
   const [browserInfo, setBrowserInfo] = useState<BrowserInfo | null>(null);
   const [latency, setLatency] = useState<number | null>(null);
   const [uploadSpeed, setUploadSpeed] = useState<number | null>(null);
+  const [mapOpen, setMapOpen] = useState(false);
+  const mapContainerRef = useRef<HTMLDivElement>(null);
+  const mapInstanceRef = useRef<L.Map | null>(null);
 
   const { data: networkInfo, isLoading, error, refetch, isFetching } = useQuery<NetworkInfo>({
     queryKey: ["/api/network-info"],
@@ -183,6 +188,47 @@ export default function Home() {
     measureLatency();
     measureUpload();
   }, []);
+
+  useEffect(() => {
+    if (!mapOpen || !mapContainerRef.current || !networkInfo?.latitude || !networkInfo?.longitude) return;
+
+    const timer = setTimeout(() => {
+      if (mapInstanceRef.current) {
+        mapInstanceRef.current.remove();
+        mapInstanceRef.current = null;
+      }
+
+      if (!mapContainerRef.current) return;
+
+      const map = L.map(mapContainerRef.current).setView(
+        [networkInfo.latitude!, networkInfo.longitude!],
+        13
+      );
+
+      L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
+        attribution: '&copy; OpenStreetMap contributors',
+      }).addTo(map);
+
+      const icon = L.divIcon({
+        html: '<div style="width:14px;height:14px;background:#3b82f6;border:2px solid white;border-radius:50%;box-shadow:0 1px 4px rgba(0,0,0,0.3)"></div>',
+        className: "",
+        iconSize: [14, 14],
+        iconAnchor: [7, 7],
+      });
+
+      L.marker([networkInfo.latitude!, networkInfo.longitude!], { icon }).addTo(map);
+
+      mapInstanceRef.current = map;
+    }, 100);
+
+    return () => {
+      clearTimeout(timer);
+      if (mapInstanceRef.current) {
+        mapInstanceRef.current.remove();
+        mapInstanceRef.current = null;
+      }
+    };
+  }, [mapOpen, networkInfo?.latitude, networkInfo?.longitude]);
 
   const connectionQuality = browserInfo ? getConnectionQuality(browserInfo.effectiveType) : null;
 
@@ -289,27 +335,19 @@ export default function Home() {
                   testId="text-coordinates"
                 />
                 <div className="pt-3 mt-2 border-t border-border/50">
-                  <Dialog>
+                  <Dialog onOpenChange={(open) => { if (open) setMapOpen(true); else setMapOpen(false); }}>
                     <DialogTrigger asChild>
                       <Button variant="outline" size="sm" className="w-full" data-testid="button-show-map">
                         <Map className="mr-2 h-4 w-4" />
                         Show Map
                       </Button>
                     </DialogTrigger>
-                    <DialogContent className="sm:max-w-md" data-testid="dialog-map">
+                    <DialogContent className="sm:max-w-md" data-testid="dialog-map" aria-describedby={undefined}>
                       <DialogHeader>
                         <DialogTitle>Your Approximate Location</DialogTitle>
                       </DialogHeader>
-                      <div className="overflow-hidden rounded-md border">
-                        <iframe
-                          title="Location Map"
-                          width="100%"
-                          height="300"
-                          style={{ border: 0 }}
-                          loading="lazy"
-                          src={`https://www.openstreetmap.org/export/embed.html?bbox=${networkInfo.longitude - 0.05},${networkInfo.latitude - 0.05},${networkInfo.longitude + 0.05},${networkInfo.latitude + 0.05}&layer=mapnik&marker=${networkInfo.latitude},${networkInfo.longitude}`}
-                          data-testid="iframe-map"
-                        />
+                      <div className="overflow-hidden rounded-md border" style={{ height: 300 }}>
+                        <div ref={mapContainerRef} style={{ width: "100%", height: "100%" }} data-testid="map-container" />
                       </div>
                       <p className="text-xs text-muted-foreground text-center" data-testid="text-map-attribution">
                         Map data from OpenStreetMap contributors
