@@ -8,7 +8,7 @@ import {
   Activity, 
   RefreshCw,
   Signal,
-
+  Map,
   Smartphone,
   CloudSun,
   Sun,
@@ -28,6 +28,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Progress } from "@/components/ui/progress";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { ThemeToggle } from "@/components/theme-toggle";
 import { InfoCard, InfoRow } from "@/components/info-card";
 import type { NetworkInfo, BrowserInfo } from "@shared/schema";
@@ -280,12 +281,43 @@ export default function Home() {
             <InfoRow label="Country" value={networkInfo?.country} testId="text-country" />
             <InfoRow label="Timezone" value={networkInfo?.timezone} testId="text-timezone" />
             {networkInfo?.latitude && networkInfo?.longitude && (
-              <InfoRow 
-                label="Coordinates" 
-                value={`${networkInfo.latitude.toFixed(4)}, ${networkInfo.longitude.toFixed(4)}`} 
-                mono 
-                testId="text-coordinates"
-              />
+              <>
+                <InfoRow 
+                  label="Coordinates" 
+                  value={`${networkInfo.latitude.toFixed(4)}, ${networkInfo.longitude.toFixed(4)}`} 
+                  mono 
+                  testId="text-coordinates"
+                />
+                <div className="pt-3 mt-2 border-t border-border/50">
+                  <Dialog>
+                    <DialogTrigger asChild>
+                      <Button variant="outline" size="sm" className="w-full" data-testid="button-show-map">
+                        <Map className="mr-2 h-4 w-4" />
+                        Show Map
+                      </Button>
+                    </DialogTrigger>
+                    <DialogContent className="sm:max-w-md" data-testid="dialog-map">
+                      <DialogHeader>
+                        <DialogTitle>Your Approximate Location</DialogTitle>
+                      </DialogHeader>
+                      <div className="overflow-hidden rounded-md border">
+                        <iframe
+                          title="Location Map"
+                          width="100%"
+                          height="300"
+                          style={{ border: 0 }}
+                          loading="lazy"
+                          src={`https://www.openstreetmap.org/export/embed.html?bbox=${networkInfo.longitude - 0.05},${networkInfo.latitude - 0.05},${networkInfo.longitude + 0.05},${networkInfo.latitude + 0.05}&layer=mapnik&marker=${networkInfo.latitude},${networkInfo.longitude}`}
+                          data-testid="iframe-map"
+                        />
+                      </div>
+                      <p className="text-xs text-muted-foreground text-center" data-testid="text-map-attribution">
+                        Map data from OpenStreetMap contributors
+                      </p>
+                    </DialogContent>
+                  </Dialog>
+                </div>
+              </>
             )}
           </InfoCard>
 
