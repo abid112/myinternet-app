@@ -419,6 +419,11 @@ export default function Home() {
               value={browserInfo?.pixelRatio ? `${browserInfo.pixelRatio}x` : undefined} 
               testId="text-pixel-ratio"
             />
+            <InfoRow 
+              label="HDR Support" 
+              value={browserInfo ? (window.matchMedia("(dynamic-range: high)").matches ? "Supported" : "Not Supported") : undefined} 
+              testId="text-hdr-support"
+            />
           </InfoCard>
 
           <InfoCard title="Weather" icon={CloudSun} isLoading={weatherLoading || isLoading} data-testid="card-weather">
