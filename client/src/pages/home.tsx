@@ -224,7 +224,7 @@ export default function Home() {
       }
       if (!mapContainerRef.current) return;
 
-      const map = L.map(mapContainerRef.current).setView([coords.lat, coords.lng], 15);
+      const map = L.map(mapContainerRef.current, { zoomControl: true }).setView([coords.lat, coords.lng], 16);
 
       L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
         attribution: '&copy; OpenStreetMap contributors',
@@ -362,16 +362,15 @@ export default function Home() {
                       <DialogHeader>
                         <DialogTitle>Your Location</DialogTitle>
                       </DialogHeader>
-                      <div className="overflow-hidden rounded-md border" style={{ height: 300 }}>
-                        {geoStatus === "loading" ? (
-                          <div className="flex h-full items-center justify-center bg-muted/50">
+                      <div className="relative overflow-hidden rounded-md border" style={{ height: 300 }}>
+                        <div ref={mapContainerRef} style={{ width: "100%", height: "100%" }} data-testid="map-container" />
+                        {geoStatus === "loading" && (
+                          <div className="absolute inset-0 flex items-center justify-center bg-muted/80">
                             <div className="text-center">
                               <div className="mx-auto mb-2 h-6 w-6 animate-spin rounded-full border-2 border-primary border-t-transparent" />
                               <p className="text-sm text-muted-foreground">Getting your location...</p>
                             </div>
                           </div>
-                        ) : (
-                          <div ref={mapContainerRef} style={{ width: "100%", height: "100%" }} data-testid="map-container" />
                         )}
                       </div>
                       <p className="text-xs text-muted-foreground text-center" data-testid="text-map-attribution">
