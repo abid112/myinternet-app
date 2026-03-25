@@ -130,6 +130,8 @@ export default function Home() {
   const [latency, setLatency] = useState<number | null>(null);
   const [uploadSpeed, setUploadSpeed] = useState<number | null>(null);
   const [mapOpen, setMapOpen] = useState(false);
+  const [deviceCoords, setDeviceCoords] = useState<{ lat: number; lng: number } | null>(null);
+  const [geoStatus, setGeoStatus] = useState<"idle" | "loading" | "granted" | "denied">("idle");
   const mapContainerRef = useRef<HTMLDivElement>(null);
   const mapInstanceRef = useRef<L.Map | null>(null);
 
@@ -190,20 +192,39 @@ export default function Home() {
   }, []);
 
   useEffect(() => {
-    if (!mapOpen || !mapContainerRef.current || !networkInfo?.latitude || !networkInfo?.longitude) return;
+    if (!mapOpen) return;
+
+    setGeoStatus("loading");
+
+    navigator.geolocation.getCurrentPosition(
+      (pos) => {
+        setDeviceCoords({ lat: pos.coords.latitude, lng: pos.coords.longitude });
+        setGeoStatus("granted");
+      },
+      () => {
+        setGeoStatus("denied");
+      },
+      { enableHighAccuracy: true, timeout: 8000 }
+    );
+  }, [mapOpen]);
+
+  useEffect(() => {
+    const coords =
+      deviceCoords ??
+      (networkInfo?.latitude && networkInfo?.longitude
+        ? { lat: networkInfo.latitude, lng: networkInfo.longitude }
+        : null);
+
+    if (!mapOpen || (geoStatus === "loading") || !coords || !mapContainerRef.current) return;
 
     const timer = setTimeout(() => {
       if (mapInstanceRef.current) {
         mapInstanceRef.current.remove();
         mapInstanceRef.current = null;
       }
-
       if (!mapContainerRef.current) return;
 
-      const map = L.map(mapContainerRef.current).setView(
-        [networkInfo.latitude!, networkInfo.longitude!],
-        13
-      );
+      const map = L.map(mapContainerRef.current).setView([coords.lat, coords.lng], 15);
 
       L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
         attribution: '&copy; OpenStreetMap contributors',
@@ -216,8 +237,7 @@ export default function Home() {
         iconAnchor: [7, 7],
       });
 
-      L.marker([networkInfo.latitude!, networkInfo.longitude!], { icon }).addTo(map);
-
+      L.marker([coords.lat, coords.lng], { icon }).addTo(map);
       mapInstanceRef.current = map;
     }, 100);
 
@@ -228,7 +248,7 @@ export default function Home() {
         mapInstanceRef.current = null;
       }
     };
-  }, [mapOpen, networkInfo?.latitude, networkInfo?.longitude]);
+  }, [mapOpen, geoStatus, deviceCoords, networkInfo?.latitude, networkInfo?.longitude]);
 
   const connectionQuality = browserInfo ? getConnectionQuality(browserInfo.effectiveType) : null;
 
@@ -328,7 +348,10 @@ export default function Home() {
                   testId="text-coordinates"
                 />
                 <div className="pt-3 mt-2 border-t border-border/50">
-                  <Dialog onOpenChange={(open) => { if (open) setMapOpen(true); else setMapOpen(false); }}>
+                  <Dialog onOpenChange={(open) => {
+                    setMapOpen(open);
+                    if (!open) { setDeviceCoords(null); setGeoStatus("idle"); }
+                  }}>
                     <DialogTrigger asChild>
                       <Button variant="outline" size="sm" className="w-full" data-testid="button-show-map">
                         <Map className="mr-2 h-4 w-4" />
@@ -337,13 +360,24 @@ export default function Home() {
                     </DialogTrigger>
                     <DialogContent className="sm:max-w-md" data-testid="dialog-map" aria-describedby={undefined}>
                       <DialogHeader>
-                        <DialogTitle>Your Approximate Location</DialogTitle>
+                        <DialogTitle>Your Location</DialogTitle>
                       </DialogHeader>
                       <div className="overflow-hidden rounded-md border" style={{ height: 300 }}>
-                        <div ref={mapContainerRef} style={{ width: "100%", height: "100%" }} data-testid="map-container" />
+                        {geoStatus === "loading" ? (
+                          <div className="flex h-full items-center justify-center bg-muted/50">
+                            <div className="text-center">
+                              <div className="mx-auto mb-2 h-6 w-6 animate-spin rounded-full border-2 border-primary border-t-transparent" />
+                              <p className="text-sm text-muted-foreground">Getting your location...</p>
+                            </div>
+                          </div>
+                        ) : (
+                          <div ref={mapContainerRef} style={{ width: "100%", height: "100%" }} data-testid="map-container" />
+                        )}
                       </div>
                       <p className="text-xs text-muted-foreground text-center" data-testid="text-map-attribution">
-                        Map data from OpenStreetMap contributors
+                        {geoStatus === "granted"
+                          ? "Showing your live device location · OpenStreetMap"
+                          : "Approximate location based on IP · OpenStreetMap"}
                       </p>
                     </DialogContent>
                   </Dialog>
