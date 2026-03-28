@@ -259,8 +259,7 @@ export default function Home() {
           <div className="flex h-14 items-center justify-between gap-4">
             <div className="flex items-center gap-2.5" data-testid="header-logo">
               <div className="relative flex h-8 w-8 items-center justify-center">
-                <div className="absolute inset-0 rounded-lg bg-gradient-to-br from-blue-500 to-cyan-400 opacity-20 dark:opacity-30" />
-                <Wifi className="relative h-4 w-4 text-blue-600 dark:text-cyan-400" />
+                <img src="/android-chrome-192x192.png" alt="My Internet logo" className="h-8 w-8 object-contain" />
               </div>
               <span className="text-base font-semibold tracking-tight">My Internet</span>
             </div>
