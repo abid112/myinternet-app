@@ -334,11 +334,19 @@ export default function Home() {
                     {ipLoading ? (
                       <Skeleton className="h-8 w-48" />
                     ) : ipv6 ? (
-                      <div className="flex items-baseline gap-2 min-w-0">
-                        <span className="text-xs text-muted-foreground uppercase tracking-wider font-medium shrink-0">IPv6:</span>
-                        <span className="text-base sm:text-lg font-bold font-mono tracking-tight break-all" data-testid="text-ip-address-v6">
-                          {ipv6}
-                        </span>
+                      <div className="flex flex-col gap-1.5 min-w-0">
+                        <div className="flex items-baseline gap-2 min-w-0">
+                          <span className="text-xs text-muted-foreground uppercase tracking-wider font-medium shrink-0">IPv4:</span>
+                          <span className="text-base sm:text-lg font-bold font-mono tracking-tight break-all" data-testid="text-ip-address">
+                            {ipv4 ?? <span className="text-muted-foreground font-normal italic text-sm">Not detected</span>}
+                          </span>
+                        </div>
+                        <div className="flex items-baseline gap-2 min-w-0">
+                          <span className="text-xs text-muted-foreground uppercase tracking-wider font-medium shrink-0">IPv6:</span>
+                          <span className="text-base sm:text-lg font-bold font-mono tracking-tight break-all" data-testid="text-ip-address-v6">
+                            {ipv6}
+                          </span>
+                        </div>
                       </div>
                     ) : (
                       <div className="min-w-0">
