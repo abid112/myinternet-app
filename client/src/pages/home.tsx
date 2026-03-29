@@ -301,15 +301,15 @@ export default function Home() {
             <div className="bg-gradient-to-r from-primary/10 via-primary/5 to-transparent p-6">
               <div className="flex flex-col gap-6 md:flex-row md:items-center md:justify-between">
                 <div className="flex items-center gap-4">
-                  <div className="flex h-16 w-16 items-center justify-center rounded-2xl bg-primary text-primary-foreground">
+                  <div className="flex h-16 w-16 shrink-0 items-center justify-center rounded-2xl bg-primary text-primary-foreground">
                     <Globe className="h-8 w-8" />
                   </div>
-                  <div>
+                  <div className="min-w-0">
                     <p className="text-sm text-muted-foreground">Your IP Address</p>
                     {isLoading ? (
                       <Skeleton className="h-9 w-48" />
                     ) : (
-                      <p className="text-3xl font-bold font-mono tracking-tight" data-testid="text-ip-address">
+                      <p className="text-xl sm:text-3xl font-bold font-mono tracking-tight break-all" data-testid="text-ip-address">
                         {networkInfo?.ip || "Unknown"}
                       </p>
                     )}
