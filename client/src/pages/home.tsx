@@ -195,13 +195,23 @@ export default function Home() {
 
     const fetchIpVersions = async () => {
       setIpLoading(true);
-      const [v4Result, v6Result] = await Promise.allSettled([
-        fetch("https://api4.ipify.org?format=json", { signal: AbortSignal.timeout(6000) }).then(r => r.json()),
-        fetch("https://api6.ipify.org?format=json", { signal: AbortSignal.timeout(6000) }).then(r => r.json()),
-      ]);
-      setIpv4(v4Result.status === "fulfilled" ? v4Result.value.ip : null);
-      setIpv6(v6Result.status === "fulfilled" ? v6Result.value.ip : null);
-      setIpLoading(false);
+      try {
+        const fetchWithTimeout = (url: string) => {
+          const controller = new AbortController();
+          const timer = setTimeout(() => controller.abort(), 6000);
+          return fetch(url, { signal: controller.signal })
+            .then(r => { clearTimeout(timer); if (!r.ok) throw new Error("non-ok"); return r.json(); })
+            .catch(err => { clearTimeout(timer); throw err; });
+        };
+        const [v4Result, v6Result] = await Promise.allSettled([
+          fetchWithTimeout("https://api4.ipify.org?format=json"),
+          fetchWithTimeout("https://api6.ipify.org?format=json"),
+        ]);
+        setIpv4(v4Result.status === "fulfilled" ? v4Result.value.ip : null);
+        setIpv6(v6Result.status === "fulfilled" ? v6Result.value.ip : null);
+      } finally {
+        setIpLoading(false);
+      }
     };
 
     fetchIpVersions();
