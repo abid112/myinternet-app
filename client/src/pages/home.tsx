@@ -129,6 +129,9 @@ export default function Home() {
   const [browserInfo, setBrowserInfo] = useState<BrowserInfo | null>(null);
   const [latency, setLatency] = useState<number | null>(null);
   const [uploadSpeed, setUploadSpeed] = useState<number | null>(null);
+  const [ipv4, setIpv4] = useState<string | null>(null);
+  const [ipv6, setIpv6] = useState<string | null>(null);
+  const [ipLoading, setIpLoading] = useState(true);
   const [mapOpen, setMapOpen] = useState(false);
   const [deviceCoords, setDeviceCoords] = useState<{ lat: number; lng: number } | null>(null);
   const [geoStatus, setGeoStatus] = useState<"idle" | "loading" | "granted" | "denied">("idle");
@@ -189,6 +192,19 @@ export default function Home() {
 
     measureLatency();
     measureUpload();
+
+    const fetchIpVersions = async () => {
+      setIpLoading(true);
+      const [v4Result, v6Result] = await Promise.allSettled([
+        fetch("https://api4.ipify.org?format=json", { signal: AbortSignal.timeout(6000) }).then(r => r.json()),
+        fetch("https://api6.ipify.org?format=json", { signal: AbortSignal.timeout(6000) }).then(r => r.json()),
+      ]);
+      setIpv4(v4Result.status === "fulfilled" ? v4Result.value.ip : null);
+      setIpv6(v6Result.status === "fulfilled" ? v6Result.value.ip : null);
+      setIpLoading(false);
+    };
+
+    fetchIpVersions();
   }, []);
 
   useEffect(() => {
@@ -304,15 +320,27 @@ export default function Home() {
                   <div className="flex h-16 w-16 shrink-0 items-center justify-center rounded-2xl bg-primary text-primary-foreground">
                     <Globe className="h-8 w-8" />
                   </div>
-                  <div className="min-w-0">
-                    <p className="text-sm text-muted-foreground">Your IP Address</p>
-                    {isLoading ? (
-                      <Skeleton className="h-9 w-48" />
-                    ) : (
-                      <p className="text-xl sm:text-3xl font-bold font-mono tracking-tight break-all" data-testid="text-ip-address">
-                        {networkInfo?.ip || "Unknown"}
-                      </p>
-                    )}
+                  <div className="min-w-0 flex flex-col gap-1.5">
+                    <div className="min-w-0">
+                      <p className="text-xs text-muted-foreground uppercase tracking-wider font-medium">IPv4</p>
+                      {ipLoading ? (
+                        <Skeleton className="h-6 w-36 mt-0.5" />
+                      ) : (
+                        <p className="text-base sm:text-lg font-bold font-mono tracking-tight break-all" data-testid="text-ip-address">
+                          {ipv4 ?? <span className="text-muted-foreground font-normal italic text-sm">Not detected</span>}
+                        </p>
+                      )}
+                    </div>
+                    <div className="min-w-0">
+                      <p className="text-xs text-muted-foreground uppercase tracking-wider font-medium">IPv6</p>
+                      {ipLoading ? (
+                        <Skeleton className="h-6 w-48 mt-0.5" />
+                      ) : (
+                        <p className="text-base sm:text-lg font-bold font-mono tracking-tight break-all" data-testid="text-ip-address-v6">
+                          {ipv6 ?? <span className="text-muted-foreground font-normal italic text-sm">Not detected</span>}
+                        </p>
+                      )}
+                    </div>
                   </div>
                 </div>
                 <div className="flex flex-wrap items-center gap-2">
