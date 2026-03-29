@@ -330,25 +330,25 @@ export default function Home() {
                   <div className="flex h-16 w-16 shrink-0 items-center justify-center rounded-2xl bg-primary text-primary-foreground">
                     <Globe className="h-8 w-8" />
                   </div>
-                  <div className="min-w-0 flex flex-col gap-1.5">
-                    <div className="min-w-0">
-                      <p className="text-xs text-muted-foreground uppercase tracking-wider font-medium">IPv4</p>
+                  <div className="min-w-0 flex flex-col gap-2">
+                    <div className="flex items-baseline gap-2 min-w-0">
+                      <span className="text-xs text-muted-foreground uppercase tracking-wider font-medium shrink-0">IPv4:</span>
                       {ipLoading ? (
-                        <Skeleton className="h-6 w-36 mt-0.5" />
+                        <Skeleton className="h-5 w-36" />
                       ) : (
-                        <p className="text-base sm:text-lg font-bold font-mono tracking-tight break-all" data-testid="text-ip-address">
+                        <span className="text-base sm:text-lg font-bold font-mono tracking-tight break-all" data-testid="text-ip-address">
                           {ipv4 ?? <span className="text-muted-foreground font-normal italic text-sm">Not detected</span>}
-                        </p>
+                        </span>
                       )}
                     </div>
-                    <div className="min-w-0">
-                      <p className="text-xs text-muted-foreground uppercase tracking-wider font-medium">IPv6</p>
+                    <div className="flex items-baseline gap-2 min-w-0">
+                      <span className="text-xs text-muted-foreground uppercase tracking-wider font-medium shrink-0">IPv6:</span>
                       {ipLoading ? (
-                        <Skeleton className="h-6 w-48 mt-0.5" />
+                        <Skeleton className="h-5 w-48" />
                       ) : (
-                        <p className="text-base sm:text-lg font-bold font-mono tracking-tight break-all" data-testid="text-ip-address-v6">
+                        <span className="text-base sm:text-lg font-bold font-mono tracking-tight break-all" data-testid="text-ip-address-v6">
                           {ipv6 ?? <span className="text-muted-foreground font-normal italic text-sm">Not detected</span>}
-                        </p>
+                        </span>
                       )}
                     </div>
                   </div>
